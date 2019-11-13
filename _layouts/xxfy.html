@@ -7,25 +7,61 @@ layout: default
 {%- assign num_monsters = site.data.data.num_monsters -%}
 {%- assign num_places = site.data.data.num_places -%}
 {%- assign amounts = site.data.data.amounts -%}
-{%- assign cost_challenge = site.data.data.cost_challenge -%}
-{%- assign cost_strength = site.data.data.cost_strength -%}
+{%- assign typeids = site.data.data.typeids -%}
+{%- assign levels = site.data.data.levels -%}
 
 <div class="container">
 
-  <form class="form-inline">
-    <label class="my-1 mr-2" for="add_monster">怪物</label>
-    <select class="custom-select my-1 mr-sm-2" id="add_monster">
-    <option selected value="-1">选择...</option>
-    {% for monster in monsters %}
-      <option value="{{ forloop.index0 }}" name="{{ monster }}">{{ monster }}</option>
-    {% endfor %}
-    </select>
-    <label class="my-1 mr-2" for="add_amount">数量</label>
-    <input type="number" class="form-control my-1 mr-sm-2" id="add_amount" value="0" aria-describedby="add-amount-label">
-    <button type="submit" class="btn btn-primary my-1" formaction="javascript:add()">添加</button>
+  <form class="form-row">
 
-    <button type="submit" class="btn btn-success my-1" formaction="javascript:calc()">计算</button>
-    <button type="submit" class="btn btn-danger my-1" formaction="javascript:reset()">重置</button>
+        <label class="my-1 mr-2" for="add_monster">怪物</label>
+        <select class="custom-select col" id="add_monster">
+        <option selected value="-1">选择...</option>
+        {% for monster in monsters %}
+          <option value="{{ forloop.index0 }}" name="{{ monster }}">{{ monster }}</option>
+        {% endfor %}
+        </select>
+
+      <label class="my-1 mr-2" for="add_amount">数量</label>
+      <input type="number" class="form-control col" id="add_amount" value="0" aria-describedby="add-amount-label">
+
+      <button type="submit" class="btn btn-primary my-1" formaction="javascript:add()">添加</button>
+      <button type="submit" class="btn btn-success my-1" formaction="javascript:calc()">计算</button>
+      <button type="submit" class="btn btn-danger my-1" formaction="javascript:reset()">重置</button>
+  </form>
+
+  <form class="form-row">
+
+    <div class="col-sm-4">
+      <input class="form-check-input" type="checkbox" checked="checked" onchange="enableByCheck($(this), $('#level_yh'))" id="is_yh">
+      <label class="form-check-label" for="is_yh">御魂</label>
+      <div class="row">
+        <label class="col-auto">最高第</label>
+        <input type="number" class="form-control col-sm-4" id="level_yh" value="10">
+        <label class="col-auto">层</label>
+      </div>
+    </div>
+
+    <div class="col-sm-3">
+      <input class="form-check-input" type="checkbox" checked="checked" id="is_tz">
+      <label class="form-check-label" for="is_tz">挑战</label>
+    </div>
+
+    <div class="col-sm-3">
+      <input class="form-check-input" type="checkbox" checked="checked" id="is_yqfy">
+      <label class="form-check-label" for="is_yqfy">妖气封印</label>
+    </div>
+
+    <div class="col-sm-4">
+      <input class="form-check-input" type="checkbox" checked="checked" onchange="enableByCheck($(this), $('#level_mm'))" id="is_mm">
+      <label class="form-check-label" for="is_mm">秘闻</label>
+      <div class="row">
+        <label class="col-auto">最高第</label>
+        <input type="number" class="form-control col-sm-4" id="level_mm" value="6">
+        <label class="col-auto">层</label>
+      </div>
+    </div>
+
   </form>
 
   <div class="card">
@@ -51,17 +87,17 @@ layout: default
   var num_monsters = {{ num_monsters }};
   var num_places = {{ num_places }};
 
-  var cost_challenge = [
+  var typeids = [
   {%- for i in (1..num_places) -%}
     {%- assign ii = forloop.index0 -%}
-    {{- cost_challenge[ii] -}}, 
+    {{- typeids[ii] -}}, 
   {%- endfor -%}
   ];
 
-  var cost_strength = [
+  var levels = [
   {%- for i in (1..num_places) -%}
     {%- assign ii = forloop.index0 -%}
-    {{- cost_strength[ii] -}}, 
+    {{- levels[ii] -}}, 
   {%- endfor -%}
   ];
 
@@ -142,9 +178,22 @@ layout: default
 
     var variables = {};
     for (i = 0; i < num_places; i++) {
+
+      var has_selected_monster = false;
+      for (j = 0; j < L; j++) {
+        if (amounts[i][id_list[j]] != 0) {
+          has_selected_monster = true;
+        }
+      }
+      if (!has_selected_monster) {
+        continue;
+      }
+
       var place_name = "place_" + i.toString();
       variables[place_name] = {};
-      variables[place_name]["cost"] = cost_strength[i] + lambda_c * cost_challenge[i];
+      // variables[place_name]["cost"] = cost_strength[i] + lambda_c * cost_challenge[i];
+      cost = getCost(typeids[i], levels[i]);
+      variables[place_name]["cost"] = cost;
       variables[place_name][place_name] = 1;
       for (j = 0; j < num_monsters; j++) {
         if (amounts[i][j] != 0) {
@@ -198,6 +247,62 @@ layout: default
 
   function clearResult() {
     document.getElementById("gq_list").querySelectorAll('*').forEach(n => n.remove());
+  }
+
+  function getCost(typeid, level) {
+    switch(typeid) {
+      // 御魂
+      case 0:
+        if ($('#is_yh').prop('checked')) {
+          if (parseInt($('#level_yh').prop('value')) >= (level + 1)) {
+            return 4.0;
+          } else {
+            return 1e5;
+          }
+        } else {
+          return 1e5;
+        }
+      // 探索
+      case 1:
+        if (level == 0) {
+          return 3.0;
+        } else {
+          return 1e5;
+        }
+      // 挑战
+      case 2:
+        if ($('#is_tz').prop('checked')) {
+          return 3.0;
+        } else {
+          return 1e5;
+        }
+      // 妖气
+      case 3:
+        if ($('#is_yqfy').prop('checked')) {
+          return 3.0;
+        } else {
+          return 1e5;
+        }
+      // 秘闻
+      case 4:
+        if ($('#is_mm').prop('checked')) {
+          if (parseInt($('#level_mm').prop('value')) >= (level + 1)) {
+            return 3.0;
+          } else {
+            return 1e5;
+          }
+        } else {
+          return 1e5;
+        }
+    }
+  }
+
+  function enableByCheck(check, other) {
+    if (check.prop('checked')) {
+      other.removeAttr('disabled');
+    } else {
+      other.attr('disabled', 'disabled');
+    }
   }
 
 </script>
