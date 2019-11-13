@@ -1,0 +1,128 @@
+---
+layout: default
+---
+
+<div class="container">
+  <div class="card">
+    <div class="card-body">
+  
+      <h5 class="card-title">食发鬼</h5>
+  
+      <div class="input-group mb-3">
+        <div class="input-group-prepend">
+          <span class="input-group-text" id="sfg-ad-label">攻击</span>
+        </div>
+        <input type="number" class="form-control" id="sfg-ad" value="0" aria-describedby="sfg-ad-label" onchange="updateSfgDamage()">
+      </div>
+  
+      <div class="input-group mb-3">
+        <div class="input-group-prepend">
+          <span class="input-group-text" id="sfg-ap-label">暴伤</span>
+        </div>
+        <input type="number" class="form-control" id="sfg-ap" value="0" aria-describedby="sfg-ap-label" onchange="updateSfgDamage()">
+      </div>
+  
+      <div class="input-group mb-3">
+        <div class="input-group-prepend">
+          <span class="input-group-text" id="sfg-damage-label">面板</span>
+        </div>
+        <input type="number" readonly class="form-control" id="sfg-damage" value="0" aria-describedby="sfg-damage-label">
+      </div>
+  
+      <div class="input-group mb-3">
+        <div class="input-group-prepend">
+          <span class="input-group-text" id="sfg-max-damage-label">最高面板</span>
+        </div>
+        <input type="number" readonly class="form-control" id="sfg-max-damage" value="7955.8" aria-describedby="sfg-max-damage-label">
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-body">
+
+    <h5 class="card-title">茨木</h5>
+
+    <div class="input-group mb-3">
+      <div class="input-group-prepend">
+        <span class="input-group-text" id="cm-ad-label">攻击</span>
+      </div>
+      <input type="number" class="form-control" id="cm-ad" value="0" aria-describedby="cm-ad-label" onchange="updateCmDamage()">
+    </div>
+
+    <div class="input-group mb-3">
+      <div class="input-group-prepend">
+        <span class="input-group-text" id="sfg-ap-label">暴伤</span>
+      </div>
+      <input type="number" class="form-control" id="cm-ap" value="0" aria-describedby="cm-ap-label" onchange="updateCmDamage()">
+    </div>
+
+    <div class="input-group mb-3">
+      <div class="input-group-prepend">
+        <span class="input-group-text" id="cm-damage-label">面板</span>
+      </div>
+      <input type="number" readonly class="form-control" id="cm-damage" value="0" aria-describedby="cm-damage-label">
+    </div>
+
+    <div class="input-group mb-3">
+      <div class="input-group-prepend">
+        <span class="input-group-text" id="cm-min-damage-label">最低面板</span>
+      </div>
+      <input type="number" readonly class="form-control" id="cm-min-damage" value="0" aria-describedby="cm-min-damage-label">
+    </div>
+  </div>
+</div>
+
+<script>
+  function updateSfgDamage() {
+    var ad = parseFloat(document.getElementById("sfg-ad").value);
+    var ap = parseFloat(document.getElementById("sfg-ap").value);
+    var damage = ad * (ap / 100.0);
+    document.getElementById("sfg-damage").value = damage;
+
+    updateCmMinDamage();
+    checkSfg();
+  }
+
+  function updateCmDamage() {
+    var ad = parseFloat(document.getElementById("cm-ad").value);
+    var ap = parseFloat(document.getElementById("cm-ap").value);
+    var damage = ad * (ap / 100.0);
+    document.getElementById("cm-damage").value = damage.toString();
+    checkCm();
+  }
+
+  function updateCmMinDamage() {
+    var sfg_damge = parseFloat(document.getElementById("sfg-damage").value);
+    var hx = 27606.05;
+    var h3 = 7896.45;
+    var dx = 707.52;
+    var d3 = 707.52;
+    var ex = 300.0 / (300.0 + dx);
+    var e3 = 300.0 / (300.0 + d3);
+    var cm_min_damage = (hx + 1.4 * h3 - (ex + 1.4 * e3) * sfg_damge) / (1.4 * e3) / (3.15 * 1.4 * 1.1);
+    document.getElementById("cm-min-damage").value = cm_min_damage.toString();
+    checkCm();
+  }
+
+  function checkSfg() {
+    var sfg_damge = parseFloat(document.getElementById("sfg-damage").value);
+    var sfg_max_damge = parseFloat(document.getElementById("sfg-max-damage").value);
+    if (sfg_damge > sfg_max_damge) {
+      $('input[id="sfg-damage"]').css('color','red');
+    } else {
+      $('input[id="sfg-damage"]').css('color','green');
+    }
+  }
+
+  function checkCm() {
+    var cm_damge = parseFloat(document.getElementById("cm-damage").value);
+    var cm_min_damge = parseFloat(document.getElementById("cm-min-damage").value);
+    if (cm_damge < cm_min_damge) {
+      $('input[id="cm-damage"]').css('color','red');
+    } else {
+      $('input[id="cm-damage"]').css('color','green');
+    }
+  }
+</script>

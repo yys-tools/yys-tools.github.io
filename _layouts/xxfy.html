@@ -1,0 +1,198 @@
+---
+layout: default
+---
+
+{%- assign monsters = site.data.data.monsters -%}
+{%- assign places = site.data.data.places -%}
+{%- assign num_monsters = site.data.data.num_monsters -%}
+{%- assign num_places = site.data.data.num_places -%}
+{%- assign amounts = site.data.data.amounts -%}
+{%- assign cost_challenge = site.data.data.cost_challenge -%}
+{%- assign cost_strength = site.data.data.cost_strength -%}
+
+<div class="container">
+
+  <form class="form-inline">
+    <label class="my-1 mr-2" for="add_monster">Monster</label>
+    <select class="custom-select my-1 mr-sm-2" id="add_monster">
+      <option selected value="-1">选择...</option>
+      {% for monster in monsters %}
+        <option value="{{ forloop.index0 }}" name="{{ monster }}">{{ monster }}</option>
+      {% endfor %}
+    </select>
+    <label class="my-1 mr-2" for="amount">数量</label>
+    <input type="number" class="form-control my-1 mr-sm-2" id="add_amount" value="0" aria-describedby="add-amount-label">
+    <button type="submit" class="btn btn-primary my-1" formaction="javascript:add()">添加</button>
+    <button type="submit" class="btn btn-primary my-1" formaction="javascript:reset()">重置</button>
+    <button type="submit" class="btn btn-primary my-1" formaction="javascript:calc()">计算</button>
+  </form>
+
+  <div class="card">
+    <div class="card-body">
+      <h5 class="card-title">已选择</h5>
+      <ul class="list-group"id="selected_monsters_list"/>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-body">
+      <h5 class="card-title">结果</h5>
+      <ul class="list-group"id="gq_list"/>
+    </div>
+  </div>
+
+</div>
+
+<script>
+
+  var num_monsters = {{ num_monsters }};
+  var num_places = {{ num_places }};
+
+  var cost_challenge = [
+  {%- for i in (1..num_places) -%}
+    {%- assign ii = forloop.index0 -%}
+    {{- cost_challenge[ii] -}}, 
+  {%- endfor -%}
+  ];
+
+  var cost_strength = [
+  {%- for i in (1..num_places) -%}
+    {%- assign ii = forloop.index0 -%}
+    {{- cost_strength[ii] -}}, 
+  {%- endfor -%}
+  ];
+
+  var monsters = [
+  {%- for i in (1..num_monsters) -%}
+    {%- assign ii = forloop.index0 -%}
+    "{{- monsters[ii] -}}", 
+  {%- endfor -%}
+  ];
+
+  var places = [
+  {%- for i in (1..num_places) -%}
+    {%- assign ii = forloop.index0 -%}
+    "{{- places[ii] -}}", 
+  {%- endfor -%}
+  ];
+
+  var amounts = [
+  {%- for i in (1..num_places) -%}
+    {%- assign ii = forloop.index0 -%}
+    [
+    {%- for j in (1..num_monsters) -%}
+      {%- assign jj = forloop.index0 -%}
+      {{ amounts[ii][jj] -}}, 
+    {%- endfor -%}
+    ],
+  {%- endfor -%}
+  ];
+
+  var id_list = [];
+  var amount_list = [];
+
+  function newArray2D(row, col) {
+    var arr = new Array(row);
+    for (i = 0; i < row; i++) {
+      arr[i] = new Array(col);
+    }
+    return arr;
+  }
+
+  function add() {
+    var id = parseInt(document.getElementById('add_monster').value);
+    var amount = parseInt(document.getElementById('add_amount').value);
+
+    if (id == -1) {
+      alert("请选择怪物");
+      return;
+    }
+
+    if (amount <= 0) {
+      alert("数量不对");
+      return;
+    }
+
+    console.log(id);
+    var name = monsters[id];
+
+    $("#selected_monsters_list").append(
+      '<li class="list-group-item  d-flex justify-content-between align-items-center">' + name + 
+      '<span class="badge badge-primary badge-pill">' + amount.toString() + '</span>' + '</li>');
+    id_list.push(id);
+    amount_list.push(amount);
+  }
+
+  function calc() {
+
+    clearResult();
+
+    var lambda_c = 0.01;
+    var L = id_list.length;
+
+    var constraints = {};
+    for (i = 0; i < L; i++) {
+      constraints["monster_" + id_list[i].toString()] = {"min": amount_list[i]};
+    }
+    console.log("Constraints:");
+    console.log(constraints);
+
+    var variables = {};
+    for (i = 0; i < num_places; i++) {
+      var place_name = "place_" + i.toString();
+      variables[place_name] = {};
+      variables[place_name]["cost"] = cost_strength[i] + lambda_c * cost_challenge[i];
+      variables[place_name][place_name] = 1;
+      for (j = 0; j < num_monsters; j++) {
+        if (amounts[i][j] != 0) {
+          variables[place_name]["monster_" + j.toString()] = amounts[i][j];
+        };
+      }
+    }
+    console.log("Variables:");
+    console.log(variables);
+
+    var ints = {};
+    for (i = 0; i < num_places; i++) {
+      ints["place_" + i.toString()] = 1;
+    }
+    console.log("Ints:");
+    console.log(ints);
+
+    var model = {
+        "optimize": "cost",
+        "opType": "min",
+        "constraints": constraints,
+        "variables": variables,
+        "ints": ints,
+    }
+    
+    var solution = solver.Solve(model);
+    console.log(solution);
+
+    for (i = 0; i < num_places; i++) {
+      var place_name = "place_" + i;
+      if (place_name in solution) {
+        $("#gq_list").append(
+          '<li class="list-group-item  d-flex justify-content-between align-items-center">' + places[i] + 
+          '<span class="badge badge-primary badge-pill">' + solution[place_name] + '</span>' + '</li>');
+
+      }
+    }
+
+  }
+
+  function reset() {
+    clearSelected();
+    clearResult();
+  }
+
+  function clearSelected() {
+    document.getElementById("selected_monsters_list").querySelectorAll('*').forEach(n => n.remove());
+  }
+
+  function clearResult() {
+    document.getElementById("gq_list").querySelectorAll('*').forEach(n => n.remove());
+  }
+
+</script>
