@@ -13,18 +13,19 @@ layout: default
 <div class="container">
 
   <form class="form-inline">
-    <label class="my-1 mr-2" for="add_monster">Monster</label>
+    <label class="my-1 mr-2" for="add_monster">怪物</label>
     <select class="custom-select my-1 mr-sm-2" id="add_monster">
-      <option selected value="-1">选择...</option>
-      {% for monster in monsters %}
-        <option value="{{ forloop.index0 }}" name="{{ monster }}">{{ monster }}</option>
-      {% endfor %}
+    <option selected value="-1">选择...</option>
+    {% for monster in monsters %}
+      <option value="{{ forloop.index0 }}" name="{{ monster }}">{{ monster }}</option>
+    {% endfor %}
     </select>
-    <label class="my-1 mr-2" for="amount">数量</label>
+    <label class="my-1 mr-2" for="add_amount">数量</label>
     <input type="number" class="form-control my-1 mr-sm-2" id="add_amount" value="0" aria-describedby="add-amount-label">
     <button type="submit" class="btn btn-primary my-1" formaction="javascript:add()">添加</button>
-    <button type="submit" class="btn btn-primary my-1" formaction="javascript:reset()">重置</button>
-    <button type="submit" class="btn btn-primary my-1" formaction="javascript:calc()">计算</button>
+
+    <button type="submit" class="btn btn-success my-1" formaction="javascript:calc()">计算</button>
+    <button type="submit" class="btn btn-danger my-1" formaction="javascript:reset()">重置</button>
   </form>
 
   <div class="card">
@@ -127,7 +128,7 @@ layout: default
 
     clearResult();
 
-    var lambda_c = 0.01;
+    var lambda_c = 100.0;
     var L = id_list.length;
 
     var constraints = {};
@@ -188,6 +189,8 @@ layout: default
   }
 
   function clearSelected() {
+    id_list = [];
+    amount_list = [];
     document.getElementById("selected_monsters_list").querySelectorAll('*').forEach(n => n.remove());
   }
 
