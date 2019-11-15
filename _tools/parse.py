@@ -125,6 +125,12 @@ def main():
     print(monster)
     print("END " + "<" * 76 + "\n")
 
+  def get_key(x):
+    pin = xpinyin.Pinyin()
+    return pin.get_pinyin(x.name)
+
+  monsters = sorted(monsters, key=get_key)
+
   places = []
   for monster in monsters:
     for xs in monster.xs_list:
@@ -158,7 +164,7 @@ def main():
 
   pin = xpinyin.Pinyin()
   data = {
-    "monsters": sorted([m.name for m in monsters], key=pin.get_pinyin),
+    "monsters": [m.name for m in monsters],
     "places": places,
     "amounts": mat_amount.tolist(),
     "typeids": mat_typeid.tolist(),
