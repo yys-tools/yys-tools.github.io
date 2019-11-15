@@ -3,6 +3,7 @@ import os
 import re
 import numpy as np
 import json
+import xpinyin
 
 DATA_DIR = "_data"
 
@@ -155,8 +156,9 @@ def main():
       mat_typeid[p_ind] = xs.typeid
       mat_level[p_ind] = xs.level
 
+  pin = xpinyin.Pinyin()
   data = {
-    "monsters": [m.name for m in monsters],
+    "monsters": sorted([m.name for m in monsters], key=pin.get_pinyin),
     "places": places,
     "amounts": mat_amount.tolist(),
     "typeids": mat_typeid.tolist(),
