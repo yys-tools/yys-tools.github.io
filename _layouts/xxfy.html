@@ -16,7 +16,7 @@ layout: default
 
     <div class="form-group">
       <label for="selected_monster">怪物</label>
-      <select class="custom-select col" id="selected_monster">
+      <select class="selectpicker" data-live-search="true" col id="selected_monster">
       <option selected value="-1">选择...</option>
         {% for monster in monsters %}
           <option value="{{ forloop.index0 }}" name="{{ monster }}">{{ monster }}</option>
@@ -235,6 +235,10 @@ layout: default
         "constraints": constraints,
         "variables": variables,
         "ints": ints,
+        "options": {
+          // Will be useful: https://github.com/JWally/jsLPSolver/issues/93
+          "keep_solutions": true,
+        }
     }
     
     $('#btn_calc').attr('disabled', 'disabled');
