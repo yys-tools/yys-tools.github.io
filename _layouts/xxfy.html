@@ -100,6 +100,15 @@ layout: default
 
 </div>
 
+<!--bootstrap-select-->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap-select@1.13.9/dist/js/bootstrap-select.min.js"></script>
+{%- comment -%} <script src="https://cdn.jsdelivr.net/npm/bootstrap-select@1.13.9/dist/js/i18n/defaults-*.min.js"></script> {%- endcomment -%}
+<!--js-lp-solver-->
+<script src="https://unpkg.com/javascript-lp-solver/prod/solver.js"></script>
+<!--js-cookie-->
+<script src="https://cdn.jsdelivr.net/npm/js-cookie@2/src/js.cookie.min.js"></script>
+
+
 <script>
 
   var num_monsters = {{ num_monsters }};
@@ -145,8 +154,44 @@ layout: default
   {%- endfor -%}
   ];
 
-  var id_list = [];
-  var amount_list = [];
+  var id_list = loadIntListFromCookie('id_list');
+  var amount_list = loadIntListFromCookie('amount_list');
+  if (id_list.length !== 0) {
+    for (i = 0; i < id_list.length; i++) {
+      console.log("i=", i, id_list.length);
+      if (amount_list[i] !== 0) {
+        addImpl(id_list[i], amount_list[i]);
+      }
+    }
+    calc();
+  }
+
+  function loadIntListFromCookie(param_name) {
+    var content = Cookies.get(param_name);
+    if (content == undefined) {
+      return [];
+    } else {
+      if (content == "") {
+        return [];
+      }
+      var list = content.split(",");
+      var N = list.length;
+      var value = new Array(N);
+      for (i = 0; i < N; i++) {
+        value[i] = parseInt(list[i]);
+      }
+      return value;
+    }
+  }
+
+  function saveListToCookie(param_name, value) {
+    if (Cookies.get(param_name) !== undefined) {
+      Cookies.remove(param_name);
+    }
+    if (value.length > 0) {
+      Cookies.set(param_name, value.toString());
+    }
+  }
 
   function newArray2D(row, col) {
     var arr = new Array(row);
@@ -159,6 +204,14 @@ layout: default
   function add() {
     var id = parseInt(document.getElementById('selected_monster').value);
     var amount = parseInt(document.getElementById('add_amount').value);
+    addImpl(id, amount);
+    id_list.push(id);
+    amount_list.push(amount);
+    saveListToCookie('id_list', id_list);
+    saveListToCookie('amount_list', amount_list);
+  }
+
+  function addImpl(id, amount) {
 
     if (id == -1) {
       alert("请选择怪物");
@@ -174,10 +227,8 @@ layout: default
     var name = monsters[id];
 
     $("#selected_monsters_list").append(
-      '<li class="list-group-item  d-flex justify-content-between align-items-center">' + name + 
+      '<li class="list-group-item d-flex justify-content-between align-items-center">' + name + 
       '<span class="badge badge-primary badge-pill">' + amount.toString() + '</span>' + '</li>');
-    id_list.push(id);
-    amount_list.push(amount);
   }
 
   function calc() {
@@ -268,6 +319,8 @@ layout: default
   function clearSelected() {
     id_list = [];
     amount_list = [];
+    saveListToCookie('id_list', id_list);
+    saveListToCookie('amount_list', amount_list);
     document.getElementById("selected_monsters_list").querySelectorAll('*').forEach(n => n.remove());
   }
 
